@@ -1,0 +1,39 @@
+# Documentation files (not needed to run the code)
+AWS_CONCEPTS.md
+DEPLOYMENT_STEPS.md
+LOCALSTACK_GUIDE.md
+LOCALSTACK_VS_REAL_AWS.md
+PIPELINE_EXPLANATION.md
+PROJECT_GUIDE.md
+QUICKSTART_LOCALSTACK.md
+REAL_AWS_PIPELINE.md
+START_HERE.md
+TESTING_GUIDE.md
+
+# Generated files
+lambda_function.zip
+test_event.json
+
+# LocalStack data directory
+localstack-data/
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Logs
+*.log
