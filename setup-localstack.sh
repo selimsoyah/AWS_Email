@@ -40,33 +40,9 @@ else
 fi
 echo ""
 
-# Add sample booking data
-echo -e "${YELLOW}[3/8] Adding sample booking data...${NC}"
-awslocal dynamodb put-item \
-    --table-name Bookings \
-    --item '{
-        "bookingId": {"S": "BOOK-001"},
-        "customerName": {"S": "John Doe"},
-        "customerEmail": {"S": "john@example.com"},
-        "bookingDate": {"S": "2026-03-15"},
-        "serviceType": {"S": "Hotel Reservation"},
-        "status": {"S": "pending"},
-        "createdAt": {"N": "1738483200"}
-    }' > /dev/null 2>&1
-
-awslocal dynamodb put-item \
-    --table-name Bookings \
-    --item '{
-        "bookingId": {"S": "BOOK-002"},
-        "customerName": {"S": "Jane Smith"},
-        "customerEmail": {"S": "jane@example.com"},
-        "bookingDate": {"S": "2026-03-20"},
-        "serviceType": {"S": "Flight Booking"},
-        "status": {"S": "pending"},
-        "createdAt": {"N": "1738483300"}
-    }' > /dev/null 2>&1
-
-echo -e "${GREEN}✓ Sample data added${NC}"
+# Skip adding sample data here - will add at the end to ensure fresh bookings
+echo -e "${YELLOW}[3/8] Preparing sample booking data (will add after setup)...${NC}"
+echo -e "${GREEN}✓ Ready${NC}"
 echo ""
 
 # Verify SES email
@@ -192,9 +168,43 @@ cat /tmp/lambda-response.json | python3 -m json.tool
 echo ""
 
 echo "========================================"
+echo -e "${YELLOW}Adding fresh sample bookings for testing...${NC}"
+echo "========================================"
+echo ""
+
+# Add sample booking data NOW (after EventBridge setup)
+# This ensures bookings are fresh and pending when user tests
+awslocal dynamodb put-item \
+    --table-name Bookings \
+    --item '{
+        "bookingId": {"S": "BOOK-001"},
+        "customerName": {"S": "John Doe"},
+        "customerEmail": {"S": "john@example.com"},
+        "bookingDate": {"S": "2026-03-15"},
+        "serviceType": {"S": "Hotel Reservation"},
+        "status": {"S": "pending"},
+        "createdAt": {"N": "1738483200"}
+    }' > /dev/null 2>&1
+
+awslocal dynamodb put-item \
+    --table-name Bookings \
+    --item '{
+        "bookingId": {"S": "BOOK-002"},
+        "customerName": {"S": "Jane Smith"},
+        "customerEmail": {"S": "jane@example.com"},
+        "bookingDate": {"S": "2026-03-20"},
+        "serviceType": {"S": "Flight Booking"},
+        "status": {"S": "pending"},
+        "createdAt": {"N": "1738483300"}
+    }' > /dev/null 2>&1
+
+echo -e "${GREEN}✓ Added 2 pending bookings ready for testing!${NC}"
+echo ""
+
+echo "========================================"
 echo "Summary of Created Resources:"
 echo "========================================"
-echo "• DynamoDB Table: Bookings (with 2 sample items)"
+echo "• DynamoDB Table: Bookings (with 2 FRESH pending bookings)"
 echo "• IAM Role: LambdaBookingNotifierRole"
 echo "• Lambda Function: BookingNotifierFunction"
 echo "• EventBridge Rule: BookingCheckSchedule (every 5 minutes)"
@@ -202,19 +212,26 @@ echo "• SES: test@example.com, noreply@example.com (verified)"
 echo ""
 
 echo "========================================"
-echo "Useful Commands:"
+echo -e "${GREEN}✓ Setup Complete! Test immediately:${NC}"
+echo "========================================"
+echo ""
+echo "Run this command now to see notifications in action:"
+echo ""
+echo -e "${YELLOW}  awslocal lambda invoke --function-name BookingNotifierFunction --payload '{}' response.json && cat response.json${NC}"
+echo ""
+echo "You should see: \"Checked bookings, sent 2 notifications\""
+echo ""
+echo "========================================"
+echo "Additional Commands:"
 echo "========================================"
 echo "# View all bookings:"
 echo "  awslocal dynamodb scan --table-name Bookings"
 echo ""
-echo "# Test Lambda manually:"
-echo "  awslocal lambda invoke --function-name BookingNotifierFunction --payload '{}' /tmp/response.json && cat /tmp/response.json"
+echo "# Check sent emails:"
+echo "  docker exec localstack-booking-notifier ls -la /tmp/localstack/state/ses/"
 echo ""
-echo "# View Lambda logs:"
-echo "  docker-compose logs -f localstack | grep -i lambda"
-echo ""
-echo "# Check DynamoDB for status changes:"
-echo "  awslocal dynamodb scan --table-name Bookings --output table"
+echo "# View email content:"
+echo "  docker exec localstack-booking-notifier cat /tmp/localstack/state/ses/<MESSAGE_ID>.json | python3 -m json.tool"
 echo ""
 echo "========================================"
 echo -e "${GREEN}All set! Your LocalStack environment is ready.${NC}"

@@ -26,7 +26,7 @@ EventBridge (every 5 min) → Lambda → DynamoDB (scan bookings)
 
 - Docker & Docker Compose installed
 - Linux/macOS/WSL environment
-- 5 minutes of your time
+
 
 ### Run It Now
 
@@ -45,7 +45,7 @@ sleep 30
 chmod +x setup-localstack.sh
 ./setup-localstack.sh
 
-# 5. Trigger the notification function
+# 5. Trigger the notification function (setup script provides this command)
 aws --endpoint-url=http://localhost:4566 lambda invoke \
     --function-name BookingNotifierFunction \
     --region us-east-1 \
@@ -55,7 +55,11 @@ aws --endpoint-url=http://localhost:4566 lambda invoke \
 cat response.json
 ```
 
+**Expected output:** `"Checked bookings, sent 2 notifications"`
+
 **Done!** The system is now running and checking for bookings every 5 minutes.
+
+> 💡 **Note:** If you see "0 notifications", the EventBridge timer already processed the bookings. Add a fresh booking using the command in the [Testing](#-testing) section below.
 
 ## 📁 Project Structure
 
@@ -93,13 +97,30 @@ The setup script creates 2 sample bookings:
 
 ## 🧪 Testing
 
-### Manual Trigger
+### Quick Test (Add Fresh Booking)
 ```bash
+# Add a new pending booking
+aws --endpoint-url=http://localhost:4566 dynamodb put-item \
+    --table-name Bookings \
+    --region us-east-1 \
+    --item '{
+        "bookingId": {"S": "BOOK-003"},
+        "customerName": {"S": "Alice Johnson"},
+        "customerEmail": {"S": "alice@example.com"},
+        "serviceType": {"S": "Restaurant Booking"},
+        "bookingDate": {"S": "2026-03-25"},
+        "status": {"S": "pending"},
+        "createdAt": {"N": "1738483400"}
+    }'
+
+# Trigger Lambda immediately
 aws --endpoint-url=http://localhost:4566 lambda invoke \
     --function-name BookingNotifierFunction \
     --region us-east-1 \
     response.json && cat response.json
 ```
+
+**Expected:** `"Checked bookings, sent 1 notification"`
 
 ### Check Emails (LocalStack)
 ```bash
